@@ -17,8 +17,6 @@ class Parse
             $result = $client->get($site_url);
             $content = $result->getBody()->getContents();
 
-
-
             echo $content;
 
 

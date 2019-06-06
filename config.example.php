@@ -1,5 +1,8 @@
 <?php
 
+// Your user should be able to create databases
+// Database name must be unique for this parser
+
 return [
     'database' => [
         'name' => 'your_dbname',

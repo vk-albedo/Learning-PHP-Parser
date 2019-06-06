@@ -1,21 +1,30 @@
-
-
-// Database Structure
-CREATE TABLE 'webpage_details' (
-'link' text NOT NULL,
- 'title' text NOT NULL,
- 'description' text NOT NULL,
- 'internal_link' text NOT NULL,
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=latin1
-
 <?php
 
 require 'vendor/autoload.php';
 
 use App\App;
+use Database\Connection;
+use Database\QueryBuilder;
 use Scripts\Parse;
 
 
 App::bind('config', require 'config.php');
+
+try {
+    $database = App::get('config')['database'];
+
+    $connection = new QueryBuilder(
+        Connection::make(
+            $database,
+            true)
+    );
+
+    $connection->createDatabase($database);
+    $connection->createTables($database);
+
+} catch (Exception $exception) {
+    echo $exception->getMessage();
+}
+
 
 Parse::parse();

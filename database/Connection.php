@@ -7,11 +7,13 @@ use PDO;
 
 class Connection
 {
-    public static function make($config)
+    public static function make($config, $first = false)
     {
         try {
+            $dbname = (!$first) ? ';dbname='.$config['name'] : '';
+
             return new PDO(
-                $config['connection'].';dbname='.$config['name'],
+                $config['connection'].$dbname,
                 $config['username'],
                 $config['password'],
                 $config['options']
