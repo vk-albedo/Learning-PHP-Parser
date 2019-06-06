@@ -12,14 +12,10 @@ CREATE TABLE 'webpage_details' (
 
 require 'vendor/autoload.php';
 
-$site_url = "https://www.kreuzwort-raetsel.net/uebersicht.html";
-
-$client = new GuzzleHttp\Client();
-
-$result = $client->get($site_url);
-
-$content = $result->getBody()->getContents();
+use App\App;
+use Scripts\Parse;
 
 
+App::bind('config', require 'config.php');
 
-echo $content;
+Parse::parse();
