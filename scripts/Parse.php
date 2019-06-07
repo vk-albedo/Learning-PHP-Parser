@@ -148,7 +148,7 @@ class Parse
                 iterator_to_array($symbols)
             );
 
-            App::push_to_db($question, $answers);
+            App::push_to_db($question[0]->textContent, $answers);
 
         } catch (Exception $exception) {
             echo $exception->getMessage();

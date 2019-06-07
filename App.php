@@ -66,7 +66,7 @@ class App
                 Connection::make($database)
             );
 
-            $connection->addElement($database, $question, $answers);
+            $connection->addElement($question, $answers);
 
             $connection = null;
 
