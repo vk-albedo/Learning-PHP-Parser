@@ -14,4 +14,5 @@ return [
         ],
     ],
     'site_url' => 'https://www.kreuzwort-raetsel.net/uebersicht.html',
+    'host' => 'https://www.kreuzwort-raetsel.net/',
 ];
