@@ -2,6 +2,9 @@
 
 namespace Database;
 
+use Exception;
+use PDO;
+
 class QueryBuilder
 {
     protected $pdo;
@@ -55,5 +58,65 @@ class QueryBuilder
              );"
         );
         $statement->execute();
+    }
+
+    public function selectSimple($table, $field, $condition, $value)
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT {$field} 
+             FROM {$table} 
+             WHERE {$condition} = {$value}"
+        );
+        $statement->execute();
+
+        return $statement->fetchAll(PDO::FETCH_CLASS);
+    }
+
+    public function insertInto($table, $parameters)
+    {
+        $sql = sprintf(
+            "INSERT INTO `%s` (%s) 
+            VALUES (%s)",
+            $table,
+            implode(', ', array_keys($parameters)),
+            ':' . implode(', :', array_keys($parameters))
+        );
+
+        try {
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($parameters);
+        } catch (Exception $exception) {
+            die('Wrong type data.');
+        }
+    }
+
+    public function addElement($question, $answers)
+    {
+//        TODO: add right $parameters
+
+        $parameters = null;
+        $this->insertInto('Questions', $parameters);
+
+        foreach ($answers as $answer) {
+            $this->insertInto('Answers', $parameters);
+        }
+
+        $question_id = $this->selectSimple(
+            'Questions',
+            'id',
+            'text',
+            $question
+        );
+
+        foreach ($answers as $answer) {
+            $answer_id = $this->selectSimple(
+                'Answers',
+                'id',
+                'text',
+                $answer
+            );
+
+            $this->insertInto('Questions_Answers', $parameters);
+        }
     }
 }
