@@ -65,7 +65,7 @@ class QueryBuilder
         $statement = $this->pdo->prepare(
             "SELECT {$field} 
              FROM {$table} 
-             WHERE {$condition} = {$value}"
+             WHERE {$condition} = '{$value}'"
         );
         $statement->execute();
 
@@ -94,12 +94,18 @@ class QueryBuilder
     {
 //        TODO: add right $parameters
 
+        echo "\n".$question ."\n";
+
         $parameters = [
-            'text' => $question,
+            'text' => $question
         ];
         $this->insertInto('Questions', $parameters);
 
-        foreach ($answers as $answer) {
+        foreach ($answers as $key => $value) {
+            $parameters = [
+                'text' => $key,
+                'symbols' => $value
+            ];
             $this->insertInto('Answers', $parameters);
         }
 
@@ -110,14 +116,20 @@ class QueryBuilder
             $question
         );
 
-        foreach ($answers as $answer) {
+        var_dump($question_id);
+
+        foreach ($answers as $key => $value) {
             $answer_id = $this->selectSimple(
                 'Answers',
                 'id',
                 'text',
-                $answer
+                $key
             );
 
+            $parameters = [
+                'question_id' => $question_id[0]->id,
+                'answer_id' => $answer_id[0]->id
+            ];
             $this->insertInto('Questions_Answers', $parameters);
         }
     }
