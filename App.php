@@ -2,32 +2,56 @@
 
 namespace App;
 
-use Database\Connection;
 use Database\QueryBuilder;
 use DOMDocument;
 use DOMXPath;
 use Exception;
 use GuzzleHttp\Client;
+use PDO;
+use PDOException;
 
 class App
 {
     protected static $registry = [];
 
-    public static function bind($key, $value)
+    public function bind($key, $value)
     {
         static::$registry[$key] = $value;
     }
 
-    public static function get($key)
+    public function get($key)
     {
-        if (!array_key_exists($key, static::$registry)) {
-            throw new Exception("No {$key} is bound in the container.\n");
+        try {
+            if (!array_key_exists($key, static::$registry)) {
+                throw new Exception("No {$key} is bound in the container.\n");
+            }
+
+            return static::$registry[$key];
+
+        } catch (Exception $exception) {
+            echo $exception->getMessage();
         }
 
-        return static::$registry[$key];
+        return [];
     }
 
-    public static function get_xpath_from_page($url)
+    public function make_connection($config, $first = false)
+    {
+        try {
+            $dbname = (!$first) ? ';dbname=' . $config['name'] : '';
+
+            return new PDO(
+                $config['connection'] . $dbname,
+                $config['username'],
+                $config['password'],
+                $config['options']
+            );
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
+        }
+    }
+
+    public function get_xpath_from_page($url)
     {
         $client = new Client();
         $request = $client->get($url);
@@ -39,39 +63,28 @@ class App
         return new DOMXPath($doc);
     }
 
-    public static function add_set_to_redis($set, $key)
+    public function add_set_to_redis($set, $key)
     {
-        try {
-            $host = self::get('config')['host'];
-            $redis = self::get('redis');
+        $host = self::get('config')['host'];
+        $redis = self::get('redis');
 
-            $values = [];
-            foreach ($set as $item) {
-                $values[] = $host . $item->textContent;
-            }
-
-            $redis->sadd($key, $values);
-
-        } catch (Exception $exception) {
-            echo $exception->getMessage();
+        $values = [];
+        foreach ($set as $item) {
+            $values[] = $host . $item->textContent;
         }
+
+        $redis->sadd($key, $values);
     }
 
-    public static function push_to_db($question, $answers)
+    public function push_to_db($question, $answers)
     {
-        try {
-            $database = self::get('config')['database'];
+        $database = self::get('config')['database'];
 
-            $connection = new QueryBuilder(
-                Connection::make($database)
-            );
+        $pdo = $this->make_connection($database);
+        $connection = new QueryBuilder($pdo);
 
-            $connection->addElement($question, $answers);
+        $connection->addElement($question, $answers);
 
-            $connection = null;
-
-        } catch (Exception $exception) {
-            echo $exception->getMessage();
-        }
+        $connection = null;
     }
 }

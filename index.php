@@ -3,37 +3,26 @@
 require 'vendor/autoload.php';
 
 use App\App;
-use Database\Connection;
 use Database\QueryBuilder;
 use Scripts\Parse;
 
-
-App::bind('config', require 'config.php');
+$app = new App();
+$app->bind('config', require 'config.php');
 
 Predis\Autoloader::register();
-try {
-    App::bind('redis', new Predis\Client());
-}
-catch (Exception $exception) {
-    die($exception->getMessage());
-}
+$app->bind('redis', new Predis\Client());
 
-try {
-    $database = App::get('config')['database'];
+$database = $app->get('config')['database'];
 
-    $connection = new QueryBuilder(
-        Connection::make(
-            $database,
-            true)
-    );
+$connection = new QueryBuilder(
+    $app->make_connection(
+        $database,
+        true)
+);
 
-    $connection->createDatabase($database);
-    $connection->createTables($database);
+$connection->createDatabase($database);
+$connection->createTables($database);
+$connection = null;
 
-    $connection = null;
-
-} catch (Exception $exception) {
-    echo $exception->getMessage();
-}
-
-Parse::parse();
+$parser = new Parse();
+$parser->parse();

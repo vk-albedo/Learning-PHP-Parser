@@ -94,7 +94,9 @@ class QueryBuilder
     {
 //        TODO: add right $parameters
 
-        $parameters = null;
+        $parameters = [
+            'text' => $question,
+        ];
         $this->insertInto('Questions', $parameters);
 
         foreach ($answers as $answer) {
