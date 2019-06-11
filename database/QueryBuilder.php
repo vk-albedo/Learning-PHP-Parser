@@ -32,7 +32,7 @@ class QueryBuilder
         $statement = $this->pdo->prepare(
             "CREATE TABLE IF NOT EXISTS `Questions`(
              `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-             `text` VARCHAR(455) NOT NULL DEFAULT ''
+             `text` VARCHAR(455) UNIQUE NOT NULL DEFAULT ''
              );"
         );
         $statement->execute();
@@ -40,7 +40,7 @@ class QueryBuilder
         $statement = $this->pdo->prepare(
             "CREATE TABLE IF NOT EXISTS `Answers`(
              `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-             `text` VARCHAR(455) NOT NULL DEFAULT '',
+             `text` VARCHAR(455) UNIQUE NOT NULL DEFAULT '',
              `symbols` INT NOT NULL DEFAULT 0
              );"
         );
@@ -75,12 +75,27 @@ class QueryBuilder
     public function insertInto($table, $parameters)
     {
         $sql = sprintf(
-            "INSERT INTO `%s` (%s) 
+            "INSERT INTO `%s` (%s)
             VALUES (%s)",
             $table,
             implode(', ', array_keys($parameters)),
             ':' . implode(', :', array_keys($parameters))
         );
+
+//        $sql = sprintf(
+//            'INSERT INTO `%4$s` (%1$s)
+//            SELECT * FROM (SELECT %2$s) AS tmp
+//            WHERE NOT EXISTS (
+//                SELECT %3$s
+//                FROM `%4$s`
+//                WHERE %3$s = "%5$s"
+//            ) LIMIT 1;',
+//            implode(', ', array_keys($parameters)),
+//            ':' . implode(', :', array_keys($parameters)),
+//            array_keys($parameters)[0],
+//            $table,
+//            array_values($parameters)[0]
+//        );
 
         try {
             $statement = $this->pdo->prepare($sql);
@@ -92,10 +107,6 @@ class QueryBuilder
 
     public function addElement($question, $answers)
     {
-//        TODO: add right $parameters
-
-        echo "\n".$question ."\n";
-
         $parameters = [
             'text' => $question
         ];
@@ -115,8 +126,6 @@ class QueryBuilder
             'text',
             $question
         );
-
-        var_dump($question_id);
 
         foreach ($answers as $key => $value) {
             $answer_id = $this->selectSimple(
