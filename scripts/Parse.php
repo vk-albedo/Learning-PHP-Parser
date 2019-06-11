@@ -6,17 +6,35 @@ use App\App;
 
 class Parse
 {
-    public function parse()
+    public function parse($mode)
     {
         $app = new App();
 
-        $this->parse_letters($app);
+        switch ($mode) {
+            case 1:
+                $redis = $app->get('redis');
 
-        $this->parse_pages($app);
+                $this->parse_letters($app);
 
-        $this->parse_questions($app);
+                $app->fork_set(
+                    'parse_pages',
+                    'letters',
+                    $this);
 
-        $this->parse_answers($app);
+//                var_dump($redis->smembers('letters'));
+//                var_dump($redis->smembers('pages'));
+//                die();
+
+                $app->fork_set(
+                    'parse_questions',
+                    'pages',
+                    $this);
+            case 2:
+                $app->fork_set(
+                    'parse_answers',
+                    'questions',
+                    $this);
+        }
     }
 
     public function parse_letters($app)
@@ -141,11 +159,6 @@ class Parse
             $answers_text_value,
             $symbols_values
         );
-
-        foreach ($answers as $answer => $a) {
-            echo($answer).' ';
-            echo($a)."\n";
-        }
 
         $app->push_to_db($question[0]->textContent, $answers);
     }

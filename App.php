@@ -65,8 +65,8 @@ class App
 
     public function add_set_to_redis($set, $key)
     {
-        $host = self::get('config')['host'];
-        $redis = self::get('redis');
+        $host = $this->get('config')['host'];
+        $redis = $this->get('redis');
 
         $values = [];
         foreach ($set as $item) {
@@ -78,7 +78,7 @@ class App
 
     public function push_to_db($question, $answers)
     {
-        $database = self::get('config')['database'];
+        $database = $this->get('config')['database'];
 
         $pdo = $this->make_connection($database);
         $connection = new QueryBuilder($pdo);
@@ -86,5 +86,26 @@ class App
         $connection->addElement($question, $answers);
 
         $connection = null;
+    }
+
+    public function fork_set($function, $set_name, $parser)
+    {
+        $redis = $this->get('redis');
+
+//        $n = 4;
+//        while($n--){
+//            echo $n."\n";
+        while($redis->smembers($set_name)){
+            $pid = pcntl_fork();
+
+            if ($pid == -1) {
+                exit("Error forking...\n");
+            }
+            else if ($pid == 0) {
+                $parser->$function($this);
+                exit();
+            }
+        }
+        while(pcntl_waitpid(0, $status) != -1);
     }
 }
