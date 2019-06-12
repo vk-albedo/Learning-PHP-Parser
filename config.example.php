@@ -1,11 +1,11 @@
 <?php
 
 // Your user should be able to create databases
-// Database name must be unique for this parser
+// Database name 'crosswords' must be unique for this parser
 
 return [
     'database' => [
-        'name' => 'your_dbname',
+        'name' => 'crosswords',
         'username' => 'your_name',
         'password' => 'your_pass',
         'connection' => 'mysql:host=localhost',

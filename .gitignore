@@ -2,3 +2,4 @@ config.php
 .idea/
 *.lock
 vendor/
+.php_cs.cache
