@@ -1,0 +1,24 @@
+CREATE DATABASE IF NOT EXISTS `crosswords`;
+
+USE `crosswords`;
+
+CREATE TABLE IF NOT EXISTS `Questions`(
+ `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ `text` VARCHAR(455) UNIQUE NOT NULL DEFAULT ''
+ );
+
+CREATE TABLE IF NOT EXISTS `Answers`(
+ `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ `text` VARCHAR(455) UNIQUE NOT NULL DEFAULT '',
+ `symbols` INT NOT NULL DEFAULT 0
+ );
+
+CREATE TABLE IF NOT EXISTS `Questions_Answers`(
+ `question_id` INT NOT NULL,
+ `answer_id` INT NOT NULL,
+ PRIMARY KEY (`question_id`, `answer_id`),
+ CONSTRAINT `FK_Questions` FOREIGN KEY (`question_id`)
+    REFERENCES `Questions` (`id`) ON DELETE CASCADE,
+ CONSTRAINT `FK_Answers` FOREIGN KEY (`answer_id`)
+    REFERENCES `Answers` (`id`) ON DELETE CASCADE
+ );
