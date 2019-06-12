@@ -27,7 +27,6 @@ class App
             }
 
             return static::$registry[$key];
-
         } catch (Exception $exception) {
             echo $exception->getMessage();
         }
@@ -35,7 +34,7 @@ class App
         return [];
     }
 
-    public function make_connection($config, $first = false)
+    public function makeConnection($config, $first = false)
     {
         try {
             $dbname = (!$first) ? ';dbname=' . $config['name'] : '';
@@ -51,7 +50,7 @@ class App
         }
     }
 
-    public function get_xpath_from_page($url)
+    public function getXpathFromPage($url)
     {
         $client = new Client();
         $request = $client->get($url);
@@ -63,7 +62,7 @@ class App
         return new DOMXPath($doc);
     }
 
-    public function add_set_to_redis($set, $key)
+    public function addSetToRedis($set, $key)
     {
         $host = $this->get('config')['host'];
         $redis = $this->get('redis');
@@ -76,11 +75,11 @@ class App
         $redis->sadd($key, $values);
     }
 
-    public function push_to_db($question, $answers)
+    public function pushToDb($question, $answers)
     {
         $database = $this->get('config')['database'];
 
-        $pdo = $this->make_connection($database);
+        $pdo = $this->makeConnection($database);
         $connection = new QueryBuilder($pdo);
 
         $connection->addElement($question, $answers);
@@ -88,24 +87,23 @@ class App
         $connection = null;
     }
 
-    public function fork_set($function, $set_name, $parser)
+    public function forkSet($function, $set_name, $parser)
     {
         $redis = $this->get('redis');
 
 //        $n = 4;
 //        while($n--){
 //            echo $n."\n";
-        while($redis->smembers($set_name)){
+        while ($redis->smembers($set_name)) {
             $pid = pcntl_fork();
 
             if ($pid == -1) {
                 exit("Error forking...\n");
-            }
-            else if ($pid == 0) {
+            } elseif ($pid == 0) {
                 $parser->$function($this);
                 exit();
             }
         }
-        while(pcntl_waitpid(0, $status) != -1);
+        while (pcntl_waitpid(0, $status) != -1);
     }
 }

@@ -14,10 +14,10 @@ class Parse
             case 1:
                 $redis = $app->get('redis');
 
-                $this->parse_letters($app);
+                $this->parseLetters($app);
 
-                $app->fork_set(
-                    'parse_pages',
+                $app->forkSet(
+                    'parsePages',
                     'letters',
                     $this);
 
@@ -25,23 +25,23 @@ class Parse
 //                var_dump($redis->smembers('pages'));
 //                die();
 
-                $app->fork_set(
-                    'parse_questions',
+                $app->forkSet(
+                    'parseQuestions',
                     'pages',
                     $this);
             case 2:
-                $app->fork_set(
-                    'parse_answers',
+                $app->forkSet(
+                    'parseAnswers',
                     'questions',
                     $this);
         }
     }
 
-    public function parse_letters($app)
+    public function parseLetters($app)
     {
         $site_url = $app->get('config')['site_url'];
 
-        $xpath = $app->get_xpath_from_page($site_url);
+        $xpath = $app->getXpathFromPage($site_url);
 
         $letters = $xpath->query(
             "//main[@id='ContentArea']
@@ -54,15 +54,15 @@ class Parse
             /@href"
         );
 
-        $app->add_set_to_redis($letters, 'letters');
+        $app->addSetToRedis($letters, 'letters');
     }
 
-    public function parse_pages($app)
+    public function parsePages($app)
     {
         $redis = $app->get('redis');
         $link = trim($redis->spop('letters'));
 
-        $xpath = $app->get_xpath_from_page($link);
+        $xpath = $app->getXpathFromPage($link);
 
         $pages = $xpath->query(
             "//main[@id='ContentArea']
@@ -76,15 +76,15 @@ class Parse
             /@href"
         );
 
-        $app->add_set_to_redis($pages, 'pages');
+        $app->addSetToRedis($pages, 'pages');
     }
 
-    public function parse_questions($app)
+    public function parseQuestions($app)
     {
         $redis = $app->get('redis');
         $link = trim($redis->spop('pages'));
 
-        $xpath = $app->get_xpath_from_page($link);
+        $xpath = $app->getXpathFromPage($link);
 
         $questions = $xpath->query(
             "//main[@id='ContentArea']
@@ -100,15 +100,15 @@ class Parse
             /@href"
         );
 
-        $app->add_set_to_redis($questions, 'questions');
+        $app->addSetToRedis($questions, 'questions');
     }
 
-    public function parse_answers($app)
+    public function parseAnswers($app)
     {
         $redis = $app->get('redis');
         $link = trim($redis->spop('questions'));
 
-        $xpath = $app->get_xpath_from_page($link);
+        $xpath = $app->getXpathFromPage($link);
 
         $question = $xpath->query(
             "//main[@id='ContentArea']
@@ -160,6 +160,6 @@ class Parse
             $symbols_values
         );
 
-        $app->push_to_db($question[0]->textContent, $answers);
+        $app->pushToDb($question[0]->textContent, $answers);
     }
 }

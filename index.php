@@ -15,9 +15,10 @@ $app->bind('redis', new Predis\Client('tcp://127.0.0.1:6379'."?read_write_timeou
 $database = $app->get('config')['database'];
 
 $connection = new QueryBuilder(
-    $app->make_connection(
+    $app->makeConnection(
         $database,
-        true)
+        true
+    )
 );
 
 $connection->createDatabase($database);
