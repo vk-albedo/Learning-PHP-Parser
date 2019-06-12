@@ -14,12 +14,12 @@ class App
 {
     protected static $registry = [];
 
-    public function bind($key, $value)
+    public static function bind($key, $value)
     {
         static::$registry[$key] = $value;
     }
 
-    public function get($key)
+    public static function get($key)
     {
         try {
             if (!array_key_exists($key, static::$registry)) {
@@ -32,22 +32,6 @@ class App
         }
 
         return [];
-    }
-
-    public function makeConnection($config, $first = false)
-    {
-        try {
-            $dbname = (!$first) ? ';dbname=' . $config['name'] : '';
-
-            return new PDO(
-                $config['connection'] . $dbname,
-                $config['username'],
-                $config['password'],
-                $config['options']
-            );
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
     }
 
     public function getXpathFromPage($url)
