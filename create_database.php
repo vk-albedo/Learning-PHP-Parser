@@ -7,11 +7,12 @@ use Database\Database;
 use Logging\Logging;
 
 App::bind('config', require 'config.php');
-$database = App::get('config')['database'];
+
 $logger = new Logging();
+
 $connection = new Database();
 $connection->connect(
-    $database,
+    App::get('config')['database'],
     true
 );
 
