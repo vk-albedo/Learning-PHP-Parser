@@ -31,13 +31,15 @@ class Logging
             );
         }
 
-        $this->writeLog(
-            $this->error_filename,
-            $log_time,
-            $file,
-            $level,
-            $message
-        );
+        if ($level == 'ERROR') {
+            $this->writeLog(
+                $this->error_filename,
+                $log_time,
+                $file,
+                $level,
+                $message
+            );
+        }
     }
 
     protected function writeLog($filename, $log_time, $file, $level, $message)

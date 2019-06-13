@@ -3,6 +3,7 @@
 
 namespace Database;
 
+use Exception;
 use Logging\Logging;
 use PDO;
 use PDOException;
@@ -46,7 +47,7 @@ class Database
 
     public function get($statement)
     {
-        $result = $this->pdo->query($statement);
+        $result = $this->pdo->query($statement, PDO::FETCH_CLASS);
 
         if (!$result) {
             $this->logger->log(
@@ -61,6 +62,14 @@ class Database
 
     public function execute($statement)
     {
-        $this->pdo->exec($statement);
+        try {
+            $this->pdo->exec($statement);
+        } catch (Exception $exception) {
+            $this->logger->log(
+                'ERROR',
+                "Exception: {$exception->getMessage()}",
+                __FILE__
+            );
+        }
     }
 }
