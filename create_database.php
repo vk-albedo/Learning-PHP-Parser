@@ -6,8 +6,6 @@ use App\App;
 use Database\Database;
 use Logging\Logging;
 
-
-
 App::bind('config', require 'config.php');
 $database = App::get('config')['database'];
 $logger = new Logging();
@@ -34,5 +32,11 @@ if ($sql) {
         __FILE__
     );
 }
+
+$logger->log(
+    'INFO',
+    'Database created',
+    __FILE__
+);
 
 unset($connection);
