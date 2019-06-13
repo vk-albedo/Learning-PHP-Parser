@@ -4,7 +4,8 @@
     "ext-pdo": "*",
     "ext-dom": "*",
     "predis/predis": "^1.1",
-    "ext-pcntl": "*"
+    "ext-pcntl": "*",
+    "ext-json": "*"
   },
   "autoload": {
     "classmap": [

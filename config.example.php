@@ -13,7 +13,8 @@ return [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING
         ],
     ],
-    'site_url' => 'https://www.kreuzwort-raetsel.net/uebersicht.html',
+    'start_url' => 'https://www.kreuzwort-raetsel.net/uebersicht.html',
     'host' => 'https://www.kreuzwort-raetsel.net/',
     'log_filename' => 'log',
+    'MAX_FORK' => 10,
 ];
