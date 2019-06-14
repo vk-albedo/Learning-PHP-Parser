@@ -71,11 +71,17 @@ class Database
     {
         set_error_handler(function ($errno, $errstr, $errfile, $errline) {
             if ($errno === E_WARNING) {
-                $this->logger->log(
-                    'ERROR',
-                    $errstr,
-                    __FILE__
-                );
+                $dom_str = 'DOMDocument::loadHTML():';
+                $pos = strpos($errstr, $dom_str);
+
+                if ($pos === false) {
+                    $this->logger->log(
+                        'ERROR',
+                        $errstr,
+                        __FILE__
+                    );
+                }
+
                 return true;
             } else {
                 // fallback to default php error handler
