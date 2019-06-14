@@ -47,30 +47,58 @@ class Database
 
     public function get($statement)
     {
-        $result = $this->pdo->query($statement);
-        $result = $result->fetch(PDO::FETCH_ASSOC);
-
-        if (!$result) {
-            $this->logger->log(
-                'ERROR',
-                'Failed: PDO::query()',
-                __FILE__
-            );
-        }
-
-        return $result;
-    }
-
-    public function execute($statement)
-    {
         try {
-            $this->pdo->exec($statement);
-        } catch (Exception $exception) {
+            $result = $this->pdo->query($statement);
+            $result = $result->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result) {
+                throw new PDOException('Failed: PDO::query()');
+            }
+
+            return $result;
+        } catch (PDOException $exception) {
             $this->logger->log(
                 'ERROR',
                 "Exception: {$exception->getMessage()}",
                 __FILE__
             );
+
+            return false;
+        }
+    }
+
+    public function execute($statement)
+    {
+        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+            if ($errno === E_WARNING) {
+                $this->logger->log(
+                    'ERROR',
+                    $errstr,
+                    __FILE__
+                );
+                return true;
+            } else {
+                // fallback to default php error handler
+                return false;
+            }
+        });
+
+        try {
+            $result = $this->pdo->exec($statement);
+
+            if ($result === false) {
+                throw new PDOException('Failed: PDO::exec()');
+            }
+
+            return true;
+        } catch (PDOException $exception) {
+            $this->logger->log(
+                'ERROR',
+                "Exception: {$exception->getMessage()}",
+                __FILE__
+            );
+
+            return false;
         }
     }
 }
