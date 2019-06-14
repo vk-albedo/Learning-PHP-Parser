@@ -47,6 +47,12 @@ class ParsePages
             __FILE__
         );
 
-        $this->app->addSetToRedis($pages, 'ParseQuestions');
+        $host = App::get('config')['host'];
+        $pages_link = [];
+        foreach ($pages as $page) {
+            $pages_link[] = $host . $page->textContent;
+        }
+
+        $this->app->addSetToRedis($pages_link, 'ParseQuestions');
     }
 }

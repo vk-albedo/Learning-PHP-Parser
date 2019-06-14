@@ -105,12 +105,9 @@ class App
 
     public function addSetToRedis($urls, $class)
     {
-        $host = self::get('config')['host'];
         $values = [];
 
         foreach ($urls as $url) {
-            $url = $host . $url->textContent;
-
             $values[] = json_encode(
                 array(
                     'url' => $url,

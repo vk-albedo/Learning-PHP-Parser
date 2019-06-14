@@ -46,6 +46,12 @@ class ParseLetters
             __FILE__
         );
 
-        $this->app->addSetToRedis($letters, 'ParsePages');
+        $host = App::get('config')['host'];
+        $letters_link = [];
+        foreach ($letters as $letter) {
+            $letters_link[] = $host . $letter->textContent;
+        }
+
+        $this->app->addSetToRedis($letters_link, 'ParsePages');
     }
 }

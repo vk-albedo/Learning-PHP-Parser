@@ -5,13 +5,17 @@ namespace Scripts;
 
 use App\App;
 use Database\Database;
+use Exception;
 use Logging\Logging;
+use Redis\Redis;
 
 class ParseAnswers
 {
     protected $app;
     protected $connection;
     protected $logger;
+    protected $url;
+    protected $redis;
 
     public function __construct()
     {
@@ -21,6 +25,7 @@ class ParseAnswers
             App::get('config')['database']
         );
         $this->logger = new Logging();
+        $this->redis = new Redis();
     }
 
     public function __destruct()
@@ -30,6 +35,8 @@ class ParseAnswers
 
     public function parse($url)
     {
+        $this->url = $url;
+
         $this->logger->log(
             'INFO',
             "Crawling: {$url}",
@@ -94,80 +101,125 @@ class ParseAnswers
 
     public function pushToDb($question, $answers)
     {
-        $parameters = [
-            'text' => $question
-        ];
-        $this->insertInto('Questions', $parameters);
-
-        $this->logger->log(
-            'INFO',
-            "Add question to database",
-            __FILE__
-        );
-
-        foreach ($answers as $key => $value) {
+        try {
             $parameters = [
-                'text' => $key,
-                'symbols' => $value
+                'text' => $question
             ];
-            $this->insertInto('Answers', $parameters);
-        }
+            $this->insertInto('Questions', $parameters);
 
-        $new_answers = sizeof($answers);
-
-        $this->logger->log(
-            'INFO',
-            "Add {$new_answers} answers to database",
-            __FILE__
-        );
-
-        $question_id = $this->selectSimple(
-            'Questions',
-            'id',
-            'text',
-            $question
-        );
-
-        var_dump($question_id);
-
-        foreach ($answers as $key => $value) {
-            $answer_id = $this->selectSimple(
-                'Answers',
-                'id',
-                'text',
-                $key
+            $this->logger->log(
+                'INFO',
+                "Add 1 question to database",
+                __FILE__
             );
 
-            var_dump($answer_id);
+            foreach ($answers as $key => $value) {
+                $parameters = [
+                    'text' => $key,
+                    'symbols' => $value
+                ];
+                $this->insertInto('Answers', $parameters);
+            }
 
-            $parameters = [
-                'question_id' => $question_id['id'],
-                'answer_id' => $answer_id['id']
-            ];
-            $this->insertInto('Questions_Answers', $parameters);
+            $new_answers = sizeof($answers);
+
+            $this->logger->log(
+                'INFO',
+                "Add {$new_answers} answers to database",
+                __FILE__
+            );
+
+            $question_id = $this->selectSimple(
+                'Questions',
+                'id',
+                'text',
+                $question
+            );
+
+            foreach ($answers as $key => $value) {
+                $answer_id = $this->selectSimple(
+                    'Answers',
+                    'id',
+                    'text',
+                    $key
+                );
+
+                $parameters = [
+                    'question_id' => $question_id['id'],
+                    'answer_id' => $answer_id['id']
+                ];
+                $this->insertInto('Questions_Answers', $parameters);
+            }
+        } catch (Exception $exception) {
+            $this->logger->log(
+                'ERROR',
+                "Exception: {$exception->getMessage()}",
+                __FILE__
+            );
         }
     }
 
     public function insertInto($table, $parameters)
     {
-        $sql = sprintf(
-            "INSERT INTO `%s` (%s) VALUES (%s)",
-            $table,
-            implode(', ', array_keys($parameters)),
-            "'" .implode("', '", array_values($parameters)) ."'"
-        );
+        try {
+            $sql = sprintf(
+                "INSERT INTO `%s` (%s) VALUES (%s)",
+                $table,
+                implode(', ', array_keys($parameters)),
+                "'" .implode("', '", array_values($parameters)) ."'"
+            );
 
-        echo $sql .PHP_EOL;
+            $result = $this->connection->execute($sql);
 
-        $this->connection->execute($sql);
+            if (!$result) {
+                throw new Exception("Invalid query to database: {$sql}");
+            }
+        } catch (Exception $exception) {
+            $this->logger->log(
+                'ERROR',
+                "Exception: {$exception->getMessage()}",
+                __FILE__
+            );
+
+            $this->app->addSetToRedis([$this->url], 'ParseAnswers');
+
+            $this->logger->log(
+                'INFO',
+                "Return url to list: {$this->url}",
+                __FILE__
+            );
+
+            exit();
+        }
     }
 
     public function selectSimple($table, $field, $condition, $value)
     {
-        $sql = "SELECT {$field} FROM {$table} WHERE {$condition} = '{$value}'";
+        try {
+            $sql = "SELECT {$field} FROM {$table} WHERE {$condition} = '{$value}'";
+            $result = $this->connection->get($sql);
 
-        echo $sql .PHP_EOL;
+            if (!$result) {
+                throw new Exception("Invalid query to database: {$sql}");
+            }
 
-        return $this->connection->get($sql);
+            return $result;
+        } catch (Exception $exception) {
+            $this->logger->log(
+                'ERROR',
+                "Exception: {$exception->getMessage()}",
+                __FILE__
+            );
+
+            $this->app->addSetToRedis([$this->url,], 'ParseAnswers');
+
+            $this->logger->log(
+                'INFO',
+                "Return url to list: {$this->url}",
+                __FILE__
+            );
+
+            exit();
+        }
     }
 }

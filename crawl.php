@@ -12,7 +12,7 @@ Predis\Autoloader::register();
 $logger = new Logging();
 $logger->log(
     'INFO',
-    'Crawler is running...',
+    PHP_EOL.'START CRAWLER.'.PHP_EOL.'Crawler is running...',
     __FILE__
 );
 
