@@ -1,3 +1,5 @@
+Read and fill `config.php`.
+
 Follow this steps to run the crawler:
 
 **Step 1.** Run `create_database.php` to create database.
