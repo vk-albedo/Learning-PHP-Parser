@@ -47,7 +47,8 @@ class Database
 
     public function get($statement)
     {
-        $result = $this->pdo->query($statement, PDO::FETCH_CLASS);
+        $result = $this->pdo->query($statement);
+        $result = $result->fetch(PDO::FETCH_ASSOC);
 
         if (!$result) {
             $this->logger->log(

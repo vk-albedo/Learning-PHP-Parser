@@ -9,7 +9,6 @@ use Exception;
 use GuzzleHttp\Client;
 use Logging\Logging;
 use Redis\Redis;
-use Scripts\ParseLetters;
 
 class App
 {
@@ -46,33 +45,17 @@ class App
 
     public function run()
     {
-        $this->logger->log(
-            'INFO',
-            'Crawler is running...',
-            __FILE__
-        );
-
-        echo 'Crawler is running...';
-
         define('MAX_FORK', self::get('config')['MAX_FORK']);
 
         $pid_array = [];
 
         while (true) {
-            echo sizeof($pid_array) . PHP_EOL;
-
             if (MAX_FORK <= sizeof($pid_array)) {
                 continue;
             }
 
             if (!$this->redis->client->smembers('links')) {
                 if (!sizeof($pid_array)) {
-                    $this->logger->log(
-                        'INFO',
-                        'Crawler has finished',
-                        __FILE__
-                    );
-
                     break;
                 }
                 continue;
@@ -87,24 +70,20 @@ class App
                 );
                 exit();
             } elseif ($pid) {
-                echo 'I`m parent' .PHP_EOL;
-
                 // parent
                 $pid_array[] = $pid;
-                pcntl_wait($status);
-                unset($pid_array[$pid]);
-            } else {
-                echo 'I`m child' .PHP_EOL;
 
+                pcntl_wait($status);
+
+                unset($pid_array[array_search($pid, $pid_array)]);
+            } else {
                 // child
                 $this->redis->reconnect();
 
-                $object = json_decode(trim($this->redis->client->spop('links')));
+                $object = json_decode($this->redis->client->spop('links'));
 
-                $url = $object->{'url'};
-                $class = $object->{'class'};
-
-                echo $class . PHP_EOL;
+                $url = trim($object->{'url'});
+                $class = 'Scripts\\' .trim($object->{'class'});
 
                 $parser = new $class();
                 $parser->parse($url);
