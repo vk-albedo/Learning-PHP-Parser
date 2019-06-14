@@ -128,6 +128,8 @@ class ParseAnswers
             $question
         );
 
+        var_dump($question_id);
+
         foreach ($answers as $key => $value) {
             $answer_id = $this->selectSimple(
                 'Answers',
@@ -136,9 +138,11 @@ class ParseAnswers
                 $key
             );
 
+            var_dump($answer_id);
+
             $parameters = [
-                'question_id' => $question_id[0]->id,
-                'answer_id' => $answer_id[0]->id
+                'question_id' => $question_id['id'],
+                'answer_id' => $answer_id['id']
             ];
             $this->insertInto('Questions_Answers', $parameters);
         }
@@ -150,8 +154,10 @@ class ParseAnswers
             "INSERT INTO `%s` (%s) VALUES (%s)",
             $table,
             implode(', ', array_keys($parameters)),
-            ':' . implode(', :', array_keys($parameters))
+            "'" .implode("', '", array_values($parameters)) ."'"
         );
+
+        echo $sql .PHP_EOL;
 
         $this->connection->execute($sql);
     }
@@ -159,6 +165,8 @@ class ParseAnswers
     public function selectSimple($table, $field, $condition, $value)
     {
         $sql = "SELECT {$field} FROM {$table} WHERE {$condition} = '{$value}'";
+
+        echo $sql .PHP_EOL;
 
         return $this->connection->get($sql);
     }

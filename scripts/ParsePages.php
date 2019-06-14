@@ -5,7 +5,6 @@ namespace Scripts;
 
 use App\App;
 use Logging\Logging;
-use Scripts\ParseQuestions;
 
 class ParsePages
 {
@@ -48,6 +47,6 @@ class ParsePages
             __FILE__
         );
 
-//        $this->app->addSetToRedis($pages, 'ParseQuestions');
+        $this->app->addSetToRedis($pages, 'ParseQuestions');
     }
 }

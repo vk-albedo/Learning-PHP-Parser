@@ -5,7 +5,6 @@ namespace Scripts;
 
 use App\App;
 use Logging\Logging;
-use Scripts\ParseAnswers;
 
 class ParseQuestions
 {
