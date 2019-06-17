@@ -1,22 +1,18 @@
 <?php
 
-require 'vendor/autoload.php';
+require '../vendor/autoload.php';
 
 use App\App;
 use Database\Database;
 use Logging\Logging;
 
-App::bind('config', require 'config.php');
+App::bind('config', require '../config.php');
 
 $logger = new Logging();
 
-$connection = new Database();
-$connection->connect(
-    App::get('config')['database'],
-    true
-);
+$connection = new Database(true);
 
-$sql = file_get_contents('db_structure.sql');
+$sql = file_get_contents('../database/sql/db_structure.sql');
 
 if ($sql) {
     $logger->log(

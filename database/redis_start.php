@@ -1,18 +1,21 @@
 <?php
 
-require 'vendor/autoload.php';
+require '../vendor/autoload.php';
 
 
 use App\App;
 use Logging\Logging;
 use Redis\Redis;
 
-App::bind('config', require 'config.php');
+App::bind('config', require '../config.php');
 
 $logger = new Logging();
 
 $start_url = App::get('config')['start_url'];
 $class = 'ParseLetters';
+
+//$start_url = 'https://www.kreuzwort-raetsel.net/umschreibung_fabelwesen.html';
+//$class = 'ParseAnswers';
 
 $data = json_encode(
     array(
@@ -22,7 +25,6 @@ $data = json_encode(
 );
 
 $redis = new Redis();
-$redis->connect();
 
 try {
     $redis->client->sadd('links', $data);

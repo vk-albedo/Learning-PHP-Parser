@@ -15,6 +15,6 @@ return [
     ],
     'start_url' => 'https://www.kreuzwort-raetsel.net/uebersicht.html',
     'host' => 'https://www.kreuzwort-raetsel.net/',
-    'log_filename' => 'log',
+    'log_filename' => '/absolute_path/php-parser-learning/logs/',
     'MAX_FORK' => 10,
 ];
