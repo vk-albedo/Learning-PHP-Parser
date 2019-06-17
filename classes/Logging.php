@@ -13,8 +13,12 @@ class Logging
     public function __construct()
     {
         $log_filename = App::get('config')['log_filename'];
-        $this->info_filename = $log_filename .'.info';
-        $this->error_filename = $log_filename .'.error';
+        $this->info_filename = "{$log_filename}log.info";
+        $this->error_filename = "{$log_filename}log.error";
+
+        if (!file_exists($log_filename)) {
+            mkdir($log_filename);
+        }
     }
 
     public function log($level, $message, $file)
@@ -44,7 +48,7 @@ class Logging
 
     protected function writeLog($filename, $log_time, $file, $level, $message)
     {
-        $log_file_data = '['.$log_time.'] ['.$file.'] ['.$level.'] '.$message.PHP_EOL;
+        $log_file_data = "[{$log_time}] [{$file}] [{$level}] {$message}\n";
         file_put_contents($filename, $log_file_data, FILE_APPEND);
     }
 }

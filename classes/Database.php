@@ -3,7 +3,7 @@
 
 namespace Database;
 
-use Exception;
+use App\App;
 use Logging\Logging;
 use PDO;
 use PDOException;
@@ -12,10 +12,12 @@ class Database
 {
     protected $pdo;
     protected $logger;
+    protected $warning = false;
 
-    public function __construct()
+    public function __construct($first = false)
     {
         $this->logger = new Logging();
+        $this->connect($first);
     }
 
     public function __destruct()
@@ -23,9 +25,11 @@ class Database
         $this->pdo = null;
     }
 
-    public function connect($config, $first = false)
+    protected function connect($first = false)
     {
         try {
+            $config = App::get('config')['database'];
+
             $dbname = (!$first) ? ';dbname=' . $config['name'] : '';
 
             $this->pdo = new PDO(
@@ -35,14 +39,19 @@ class Database
                 $config['options']
             );
         } catch (PDOException $exception) {
-            die($exception->getMessage());
+            $this->logger->log(
+                'ERROR',
+                "Exception: {$exception->getMessage()}",
+                __FILE__
+            );
+            exit();
         }
     }
 
-    public function reconnect($config)
+    public function reconnect()
     {
         $this->pdo = null;
-        $this->connect($config);
+        $this->connect();
     }
 
     public function get($statement)
@@ -71,15 +80,17 @@ class Database
     {
         set_error_handler(function ($errno, $errstr, $errfile, $errline) {
             if ($errno === E_WARNING) {
-                $dom_str = 'DOMDocument::loadHTML():';
+                $dom_str = 'Integrity constraint violation: 1062 Duplicate entry';
                 $pos = strpos($errstr, $dom_str);
 
-                if ($pos === false) {
-                    $this->logger->log(
-                        'ERROR',
-                        $errstr,
-                        __FILE__
-                    );
+                if ($pos !== false) {
+//                    $this->logger->log(
+//                        'ERROR',
+//                        $errstr,
+//                        __FILE__
+//                    );
+
+                    $this->warning = true;
                 }
 
                 return true;
@@ -92,7 +103,7 @@ class Database
         try {
             $result = $this->pdo->exec($statement);
 
-            if ($result === false) {
+            if ($result === false && $this->warning == false) {
                 throw new PDOException('Failed: PDO::exec()');
             }
 

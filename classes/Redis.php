@@ -9,12 +9,17 @@ class Redis
 {
     public $client;
 
+    public function __construct()
+    {
+        $this->connect();
+    }
+
     public function __destruct()
     {
         $this->client = null;
     }
 
-    public function connect()
+    protected function connect()
     {
         $this->client = new Predis\Client(
             'tcp://127.0.0.1:6379'
