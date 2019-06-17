@@ -9,7 +9,7 @@ use Exception;
 use Logging\Logging;
 use Redis\Redis;
 
-class ParseAnswers
+class ParseAnswers implements IParse
 {
     protected $app;
     protected $connection;
@@ -21,9 +21,6 @@ class ParseAnswers
     {
         $this->app = new App();
         $this->connection = new Database();
-        $this->connection->connect(
-            App::get('config')['database']
-        );
         $this->logger = new Logging();
         $this->redis = new Redis();
     }
@@ -109,7 +106,7 @@ class ParseAnswers
 
             $this->logger->log(
                 'INFO',
-                "Add 1 question to database",
+                "Get 1 question to database",
                 __FILE__
             );
 
@@ -125,7 +122,7 @@ class ParseAnswers
 
             $this->logger->log(
                 'INFO',
-                "Add {$new_answers} answers to database",
+                "Get {$new_answers} answers to database",
                 __FILE__
             );
 

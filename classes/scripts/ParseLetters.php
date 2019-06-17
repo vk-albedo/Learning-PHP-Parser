@@ -6,7 +6,7 @@ namespace Scripts;
 use App\App;
 use Logging\Logging;
 
-class ParseLetters
+class ParseLetters implements IParse
 {
     protected $app;
     protected $logger;
@@ -52,6 +52,7 @@ class ParseLetters
             $letters_link[] = $host . $letter->textContent;
         }
 
-        $this->app->addSetToRedis($letters_link, 'ParsePages');
+        $objects = $this->app->encodeToJSON($letters_link, 'ParsePages');
+        $this->app->addSetToRedis($objects);
     }
 }
