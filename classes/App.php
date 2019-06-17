@@ -8,6 +8,7 @@ use DOMXPath;
 use Exception;
 use GuzzleHttp\Client;
 use Logging\Logging;
+use Proxy\Proxy;
 use Redis\Redis;
 
 class App
@@ -15,12 +16,33 @@ class App
     protected static $registry = [];
     protected $logger;
     protected $redis;
+    protected static $pid_array = [];
 
     public function __construct()
     {
         $this->logger = new Logging();
         $this->redis = new Redis();
-        $this->redis->connect();
+    }
+
+    public function __destruct()
+    {
+        $objects = [];
+        foreach (self::$pid_array as $pid => $object) {
+            $objects[] = $object;
+
+            $url = trim($object->{'url'});
+
+            $this->logger->log(
+                'INFO',
+                "Return url to list: {$url}",
+                __FILE__
+            );
+
+            exec("kill -9 {$pid}");
+        }
+        if ($objects) {
+            $this->addSetToRedis($objects);
+        }
     }
 
     public static function bind($key, $value)
@@ -45,55 +67,72 @@ class App
 
     public function run()
     {
-        define('MAX_FORK', self::get('config')['MAX_FORK']);
-
-        $pid_array = [];
-
         while (true) {
-            if (MAX_FORK <= sizeof($pid_array)) {
+            var_dump(self::$pid_array);
+
+            if (MAX_FORK <= sizeof(self::$pid_array)) {
                 continue;
             }
 
             if (!$this->redis->client->smembers('links')) {
-                if (!sizeof($pid_array)) {
+                if (!sizeof(self::$pid_array)) {
                     break;
                 }
                 continue;
             }
 
+            $object = json_decode($this->redis->client->spop('links'));
+
             $pid = pcntl_fork();
-            if ($pid == -1) {
-                $this->logger->log(
-                    'ERROR',
-                    'Could not fork',
-                    __FILE__
-                );
-                exit();
-            } elseif ($pid) {
-                // parent
-                $pid_array[] = $pid;
+            $this->redis->reconnect();
 
-                pcntl_wait($status);
+            switch ($pid) {
+                case -1:
+                    $this->logger->log(
+                        'ERROR',
+                        'Could not fork',
+                        __FILE__
+                    );
 
-                unset($pid_array[array_search($pid, $pid_array)]);
-            } else {
-                // child
-                $this->redis->reconnect();
+                    exit();
+                case 0:
+                    // child
+                    $url = trim($object->{'url'});
+                    $class = 'Scripts\\' . trim($object->{'class'});
 
-                $object = json_decode($this->redis->client->spop('links'));
+                    $parser = new $class();
+                    $parser->parse($url);
 
-                $url = trim($object->{'url'});
-                $class = 'Scripts\\' .trim($object->{'class'});
+                    sleep(60);
 
-                $parser = new $class();
-                $parser->parse($url);
+                    exit();
+                default:
+                    // parent
+
+                    var_dump($pid);
+
+                    self::$pid_array["{$pid}"] = $object;
+
+                    var_dump(self::$pid_array);
+
+                    pcntl_wait($status);
+
+                    unset(self::$pid_array[$pid]);
             }
         }
     }
 
     public function getXpathFromPage($url)
     {
-        $client = new Client();
+        $proxy = Proxy::getProxy();
+
+        $client = new Client(
+            [
+            'request.options' => [
+                'proxy' => $proxy,
+                ],
+            ]
+        );
         $request = $client->get($url);
         $content = $request->getBody()->getContents();
 
@@ -103,7 +142,7 @@ class App
         return new DOMXPath($doc);
     }
 
-    public function addSetToRedis($urls, $class)
+    public function encodeToJSON($urls, $class)
     {
         $values = [];
 
@@ -116,6 +155,11 @@ class App
             );
         }
 
-        $this->redis->client->sadd('links', $values);
+        return $values;
+    }
+
+    public function addSetToRedis($objects)
+    {
+        $this->redis->client->sadd('links', $objects);
     }
 }
