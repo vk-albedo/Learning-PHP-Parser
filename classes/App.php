@@ -17,6 +17,7 @@ class App
     protected $logger;
     protected $redis;
     protected static $pid_array = [];
+    protected $isChild = false;
 
     public function __construct()
     {
@@ -26,22 +27,33 @@ class App
 
     public function __destruct()
     {
-        $objects = [];
-        foreach (self::$pid_array as $pid => $object) {
-            $objects[] = $object;
+        echo getmypid();
 
-            $url = trim($object->{'url'});
+        echo ' is Child ';
+        var_dump($this->isChild);
+        if ($this->isChild == false) {
+            echo 'destructor ';
 
-            $this->logger->log(
-                'INFO',
-                "Return url to list: {$url}",
-                __FILE__
-            );
+            var_dump(self::$pid_array);
 
-            exec("kill -9 {$pid}");
-        }
-        if ($objects) {
-            $this->addSetToRedis($objects);
+
+            $objects = [];
+            foreach (self::$pid_array as $pid => $object) {
+                $objects[] = $object;
+
+                $url = trim($object->{'url'});
+
+                $this->logger->log(
+                    'INFO',
+                    "Return url to list after closing: {$url}",
+                    __FILE__
+                );
+
+                exec("kill -9 {$pid}");
+            }
+            if ($objects) {
+                $this->addSetToRedis($objects);
+            }
         }
     }
 
@@ -70,6 +82,18 @@ class App
         while (true) {
             var_dump(self::$pid_array);
 
+            foreach (self::$pid_array as $pid => $object) {
+                $res = pcntl_waitpid($pid, $status, WNOHANG);
+
+                // If the process has already exited
+                if ($res == -1 || $res > 0) {
+                    echo 'Unset ' . $pid . PHP_EOL;
+                    unset(self::$pid_array[$pid]);
+                }
+
+                sleep(1);
+            }
+
             if (MAX_FORK <= sizeof(self::$pid_array)) {
                 continue;
             }
@@ -94,16 +118,19 @@ class App
                         __FILE__
                     );
 
+                    $this->isChild = true;
+                    $this->addSetToRedis([$object,]);
+
                     exit();
                 case 0:
                     // child
+                    $this->isChild = true;
+
                     $url = trim($object->{'url'});
                     $class = 'Scripts\\' . trim($object->{'class'});
 
                     $parser = new $class();
                     $parser->parse($url);
-
-                    sleep(60);
 
                     exit();
                 default:
@@ -114,26 +141,25 @@ class App
                     self::$pid_array["{$pid}"] = $object;
 
                     var_dump(self::$pid_array);
-
-                    pcntl_wait($status);
-
-                    unset(self::$pid_array[$pid]);
             }
         }
     }
 
     public function getXpathFromPage($url)
     {
-        $proxy = Proxy::getProxy();
+        do {
+            $proxy = Proxy::getProxy();
 
-        $client = new Client(
-            [
-            'request.options' => [
-                'proxy' => $proxy,
-                ],
-            ]
-        );
-        $request = $client->get($url);
+            $client = new Client(
+                [
+                    'request.options' => [
+                        'proxy' => $proxy,
+                    ],
+                ]
+            );
+            $request = $client->get($url);
+        } while ($request->getStatusCode() != 200);
+
         $content = $request->getBody()->getContents();
 
         $doc = new DOMDocument();

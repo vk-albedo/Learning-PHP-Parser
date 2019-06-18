@@ -20,6 +20,8 @@ class Proxy
     public static function getProxy()
     {
         $proxy = self::$storage[0];
+        unset(self::$storage[0]);
+        self::$storage = array_values(self::$storage);
 
         if (!self::$storage) {
             (new Proxy())->updateStorage();
