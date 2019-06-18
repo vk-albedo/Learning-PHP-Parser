@@ -121,7 +121,7 @@ class App
                     $this->isChild = true;
                     $this->addSetToRedis([$object,]);
 
-                    exit();
+                    exit('Could not fork');
                 case 0:
                     // child
                     $this->isChild = true;
@@ -132,7 +132,7 @@ class App
                     $parser = new $class();
                     $parser->parse($url);
 
-                    exit();
+                    exit('Child closing.');
                 default:
                     // parent
 
