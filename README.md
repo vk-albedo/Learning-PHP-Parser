@@ -9,3 +9,5 @@ Follow this steps to run the crawler:
 **Step 3.** Run `crawl.php` to start crawling.
 
 If you need to restart the crawler just do the third step.
+
+You can find logs in `logs/log.info` and `logs/log.error` files.
