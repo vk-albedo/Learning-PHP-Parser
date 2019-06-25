@@ -25,38 +25,6 @@ class App
         $this->redis = new Redis();
     }
 
-    public function __destruct()
-    {
-        echo getmypid();
-
-        echo ' is Child ';
-        var_dump($this->isChild);
-        if ($this->isChild == false) {
-            echo 'destructor ';
-
-            var_dump(self::$pid_array);
-
-
-            $objects = [];
-            foreach (self::$pid_array as $pid => $object) {
-                $objects[] = $object;
-
-                $url = trim($object->{'url'});
-
-                $this->logger->log(
-                    'INFO',
-                    "Return url to list after closing: {$url}",
-                    __FILE__
-                );
-
-                exec("kill -9 {$pid}");
-            }
-            if ($objects) {
-                $this->addSetToRedis($objects);
-            }
-        }
-    }
-
     public static function bind($key, $value)
     {
         static::$registry[$key] = $value;
@@ -71,7 +39,11 @@ class App
 
             return static::$registry[$key];
         } catch (Exception $exception) {
-            echo $exception->getMessage();
+            (new App())->logger->log(
+                'ERROR',
+                $exception->getMessage(),
+                __FILE__
+            );
         }
 
         return [];
@@ -80,14 +52,20 @@ class App
     public function run()
     {
         while (true) {
-            var_dump(self::$pid_array);
-
             foreach (self::$pid_array as $pid => $object) {
                 $res = pcntl_waitpid($pid, $status, WNOHANG);
 
                 // If the process has already exited
                 if ($res == -1 || $res > 0) {
-                    echo 'Unset ' . $pid . PHP_EOL;
+                    $this->redis->client->srem(
+                        'links',
+                        json_encode(
+                            array(
+                                'url' => (self::$pid_array["{$pid}"])->url,
+                                'class' => (self::$pid_array["{$pid}"])->class
+                            )
+                        )
+                    );
                     unset(self::$pid_array[$pid]);
                 }
 
@@ -105,7 +83,7 @@ class App
                 continue;
             }
 
-            $object = json_decode($this->redis->client->spop('links'));
+            $object = json_decode($this->redis->client->srandmember('links'));
 
             $pid = pcntl_fork();
             $this->redis->reconnect();
@@ -132,15 +110,10 @@ class App
                     $parser = new $class();
                     $parser->parse($url);
 
-                    exit('Child closing.');
+                    exit();
                 default:
                     // parent
-
-                    var_dump($pid);
-
                     self::$pid_array["{$pid}"] = $object;
-
-                    var_dump(self::$pid_array);
             }
         }
     }
