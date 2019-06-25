@@ -43,7 +43,7 @@ class ParsePages implements IParse
 
         $this->logger->log(
             'INFO',
-            "Crawled: {$url} - get {$new_links} new urls.",
+            "Get {$new_links} new urls: {$url}",
             __FILE__
         );
 

@@ -16,6 +16,7 @@ class ParseAnswers implements IParse
     protected $logger;
     protected $url;
     protected $redis;
+    protected $isParsed = false;
 
     public function __construct()
     {
@@ -28,6 +29,16 @@ class ParseAnswers implements IParse
     public function __destruct()
     {
         $this->connection = null;
+
+        if ($this->isParsed == false) {
+            $this->app->addSetToRedis([$this->url], 'ParseAnswers');
+
+            $this->logger->log(
+                'INFO',
+                "Return url to list: {$this->url}",
+                __FILE__
+            );
+        }
     }
 
     public function parse($url)
@@ -94,6 +105,8 @@ class ParseAnswers implements IParse
         );
 
         $this->pushToDb($question[0]->textContent, $answers);
+
+        $this->isParsed = true;
     }
 
     public function pushToDb($question, $answers)
@@ -106,7 +119,7 @@ class ParseAnswers implements IParse
 
             $this->logger->log(
                 'INFO',
-                "Get 1 question to database",
+                "Get 1 question: : {$this->url}",
                 __FILE__
             );
 
@@ -122,7 +135,7 @@ class ParseAnswers implements IParse
 
             $this->logger->log(
                 'INFO',
-                "Get {$new_answers} answers to database",
+                "Get {$new_answers} answer(s): {$this->url}",
                 __FILE__
             );
 
@@ -153,6 +166,9 @@ class ParseAnswers implements IParse
                 "Exception: {$exception->getMessage()}",
                 __FILE__
             );
+
+            $this->__destruct();
+            exit();
         }
     }
 
@@ -178,14 +194,7 @@ class ParseAnswers implements IParse
                 __FILE__
             );
 
-            $this->app->addSetToRedis([$this->url], 'ParseAnswers');
-
-            $this->logger->log(
-                'INFO',
-                "Return url to list: {$this->url}",
-                __FILE__
-            );
-
+            $this->__destruct();
             exit();
         }
     }
@@ -208,14 +217,7 @@ class ParseAnswers implements IParse
                 __FILE__
             );
 
-            $this->app->addSetToRedis([$this->url,], 'ParseAnswers');
-
-            $this->logger->log(
-                'INFO',
-                "Return url to list: {$this->url}",
-                __FILE__
-            );
-
+            $this->__destruct();
             exit();
         }
     }

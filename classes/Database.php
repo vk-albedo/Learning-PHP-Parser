@@ -84,12 +84,6 @@ class Database
                 $pos = strpos($errstr, $dom_str);
 
                 if ($pos !== false) {
-//                    $this->logger->log(
-//                        'ERROR',
-//                        $errstr,
-//                        __FILE__
-//                    );
-
                     $this->warning = true;
                 }
 

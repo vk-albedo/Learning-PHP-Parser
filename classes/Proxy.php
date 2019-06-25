@@ -45,7 +45,7 @@ class Proxy
 
         $this->logger->log(
             'INFO',
-            "Get {$num_proxy} proxies\n",
+            "Get {$num_proxy} proxies",
             __FILE__
         );
     }
