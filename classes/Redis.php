@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Redis;
+namespace Database;
 
 use Predis;
 

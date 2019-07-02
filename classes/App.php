@@ -9,14 +9,14 @@ use Exception;
 use GuzzleHttp\Client;
 use Logging\Logging;
 use Proxy\Proxy;
-use Redis\Redis;
+use Database\Redis;
 
 class App
 {
     protected static $registry = [];
     protected $logger;
     protected $redis;
-    protected static $pid_array = [];
+    protected $pid_array = [];
     protected $isChild = false;
 
     public function __construct()

@@ -7,7 +7,7 @@ use App\App;
 use Database\Database;
 use Exception;
 use Logging\Logging;
-use Redis\Redis;
+use Database\Redis;
 
 class ParseAnswers implements IParse
 {

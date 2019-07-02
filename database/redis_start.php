@@ -5,7 +5,7 @@ require '../vendor/autoload.php';
 
 use App\App;
 use Logging\Logging;
-use Redis\Redis;
+use Database\Redis;
 
 App::bind('config', require '../config.php');
 
